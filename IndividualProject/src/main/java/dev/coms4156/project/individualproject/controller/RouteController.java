@@ -3,6 +3,8 @@ package dev.coms4156.project.individualproject.controller;
 import dev.coms4156.project.individualproject.model.Book;
 import dev.coms4156.project.individualproject.service.MockApiService;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -74,6 +76,41 @@ public class RouteController {
     }
   }
 
+    /**
+     *
+     * @return A {@code ResponseEntity} containing a list of 10 recommended {@code Book} objects with an
+     * HTTP 200 response if successful, or a message indicating an error occurred with an HTTP 500
+     * response
+     */
+    @GetMapping({"/books/recommendation"})
+    public ResponseEntity<?> getRecommendedBooks() {
+        try {
+            List<Book> all_books = mockApiService.getBooks();
+            int books_len = all_books.size();
+
+            if (books_len < 10){
+                return new ResponseEntity<>(all_books, HttpStatus.OK);
+            }
+
+            all_books.sort((a, b)->{
+                return b.getAmountOfTimesCheckedOut() - a.getAmountOfTimesCheckedOut();
+            });
+
+            List<Book> rec_books = new ArrayList<Book>(all_books.subList(0, 5)), tail = all_books.subList(5, books_len);
+
+            Collections.shuffle(tail);
+
+            for(int i =0; i<5; i++){
+                rec_books.add(tail.get(i));
+            }
+
+            return new ResponseEntity<>(rec_books, HttpStatus.OK);
+        } catch (Exception e) {
+            System.err.println(e);
+            return new ResponseEntity<>("Error occurred when getting all recommended books",
+                    HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
 
 
   /**
