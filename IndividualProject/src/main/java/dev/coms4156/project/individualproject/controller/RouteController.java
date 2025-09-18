@@ -10,6 +10,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 /**
@@ -54,7 +55,7 @@ public class RouteController {
    * Returns a list of all the books with available copies.
    *
    * @return A {@code ResponseEntity} containing a list of available {@code Book} objects with an
-   *         HTTP 200 response if sucessful, or a message indicating an error occurred with an
+   *         HTTP 200 response if successful, or a message indicating an error occurred with an
    *         HTTP 500 response.
    */
   @GetMapping({"/books/available"})
@@ -76,45 +77,49 @@ public class RouteController {
     }
   }
 
-    /**
-     *
-     * @return A {@code ResponseEntity} containing a list of 10 recommended {@code Book} objects with an
-     * HTTP 200 response if successful, or a message indicating an error occurred with an HTTP 500
-     * response
-     */
-    @GetMapping({"/books/recommendation"})
-    public ResponseEntity<?> getRecommendedBooks() {
-        try {
-            List<Book> all_books = mockApiService.getBooks();
-            int books_len = all_books.size();
+  /**
+   * Returns a list of unique recommended {@code Books}.
+   *
+   * @return A {@code ResponseEntity} containing a list of 10 recommended {@code Book} objects
+   *         with an HTTP 200 response if successful, or a message indicating an error occurred
+   *         with an HTTP 500 response. If there are less than 10 books in the database, it
+   *         will return all available books.
+   */
 
-            if (books_len < 10){
-                return new ResponseEntity<>(all_books, HttpStatus.OK);
-            }
+  @GetMapping({"/books/recommendation"})
+  public ResponseEntity<?> getRecommendedBooks() {
+    try {
+      List<Book> allBooks = mockApiService.getBooks();
+      int booksLen = allBooks.size();
 
-            all_books.sort((a, b)->{
-                return b.getAmountOfTimesCheckedOut() - a.getAmountOfTimesCheckedOut();
-            });
+      if (booksLen < 10) {
+        return new ResponseEntity<>(allBooks, HttpStatus.OK);
+      }
 
-            List<Book> rec_books = new ArrayList<Book>(all_books.subList(0, 5)), tail = all_books.subList(5, books_len);
+      allBooks.sort((a, b) -> {
+        return b.getAmountOfTimesCheckedOut() - a.getAmountOfTimesCheckedOut();
+      });
 
-            Collections.shuffle(tail);
+      List<Book> recBooks = new ArrayList<Book>(allBooks.subList(0, 5));
+      List<Book> tail = allBooks.subList(5, booksLen);
 
-            for(int i =0; i<5; i++){
-                rec_books.add(tail.get(i));
-            }
+      Collections.shuffle(tail);
 
-            return new ResponseEntity<>(rec_books, HttpStatus.OK);
-        } catch (Exception e) {
-            System.err.println(e);
-            return new ResponseEntity<>("Error occurred when getting all recommended books",
-                    HttpStatus.INTERNAL_SERVER_ERROR);
-        }
+      for (int i = 0; i < 5; i++) {
+        recBooks.add(tail.get(i));
+      }
+
+      return new ResponseEntity<>(recBooks, HttpStatus.OK);
+    } catch (Exception e) {
+      System.err.println(e);
+      return new ResponseEntity<>("Error occurred when getting all recommended books",
+        HttpStatus.INTERNAL_SERVER_ERROR);
     }
+  }
 
 
   /**
-   * Adds a copy to the {@code} Book object if it exists.
+   * Adds a copy to the {@code Book}  object if it exists.
    *
    * @param bookId An {@code Integer} representing the unique id of the book.
    * @return A {@code ResponseEntity} containing the updated {@code Book} object with an
@@ -138,5 +143,40 @@ public class RouteController {
           HttpStatus.INTERNAL_SERVER_ERROR);
     }
   }
+
+  /**
+   * Checkout a copy of {@code Book} object if it exists and is available.
+   *
+   * @param bookId An {@code Integer} representing the unique id of the book.
+   * @return A {@code ResponseEntity} containing the updated {@code Book} object with an
+   *         HTTP 200 response if successful, HTTP 404 if the book is not found, HTTP 409
+   *         if the book is unavailable or a message indicating an error occurred with an
+   *         HTTP 500 code.
+   */
+  @PatchMapping({"/book/checkout"})
+  public ResponseEntity<?> checkoutBook(@RequestParam Integer bookId) {
+
+    try {
+      for (Book book : mockApiService.getBooks()) {
+
+        if (bookId.equals(book.getId())) {
+          String res = book.checkoutCopy();
+
+          if (res == null) {
+            return new ResponseEntity<>(book, HttpStatus.CONFLICT);
+          }
+          return new ResponseEntity<>(book, HttpStatus.OK);
+        }
+      }
+
+      return new ResponseEntity<>("Book not found.", HttpStatus.NOT_FOUND);
+    } catch (Exception e) {
+      System.err.println(e);
+      return new ResponseEntity<>("Error occurred when adding a copy.",
+          HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+  }
+
+
 
 }

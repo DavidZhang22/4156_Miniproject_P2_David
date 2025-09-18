@@ -1,9 +1,9 @@
 package dev.coms4156.project.individualproject;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import dev.coms4156.project.individualproject.controller.RouteController;
 import dev.coms4156.project.individualproject.model.Book;
@@ -61,30 +61,98 @@ public class RouteControllerTests {
   }
 
   @Test
-  public void getRecommendedTestSuccess(){
-    ResponseEntity<?> res = controller.getRecommendedBooks();
+  public void addCopyTestSuccess() {
+
+    books = mockApiService.getBooks();
+    Book book = books.get(0);
+
+
+    int totalCopies = book.getTotalCopies();
+    int availableCopies = book.getCopiesAvailable();
+
+    ResponseEntity<?> res = controller.addCopy(book.getId());
     assertEquals(HttpStatus.OK, res.getStatusCode());
 
-    List<Book> rec_books = res.getBody();
-    assertNotNull(rec_books);
-    assertEquals(rec_books.size(), new HashSet<>(rec_books).size());
-
-    List<Book> all_books = mockApiService.getBooks();
-
-    all_books.sort((a, b)->{
-      return b.getAmountOfTimesCheckedOut() - a.getAmountOfTimesCheckedOut();
-    });
-
-    for(int i =0; i<5; i++){
-        assertTrue(rec_books.contains(all_books.get(i)));
-    }
+    assertEquals(availableCopies + 1, book.getCopiesAvailable());
+    assertEquals(totalCopies + 1, book.getTotalCopies());
 
   }
 
   @Test
-  public void addCopyTest() {
+  public void addCopyTestNotFound() {
 
-  //WIP
+    ResponseEntity<?> res = controller.checkoutBook(-1);
+    assertEquals(HttpStatus.NOT_FOUND, res.getStatusCode());
+    assertEquals("Book not found.",  res.getBody());
+
+  }
+
+
+  @Test
+  public void getRecommendedTestSuccess() {
+    ResponseEntity<?> res = controller.getRecommendedBooks();
+    assertEquals(HttpStatus.OK, res.getStatusCode());
+
+    List<Book> recBooks = (ArrayList<Book>) res.getBody();
+    assertNotNull(recBooks);
+    assertEquals(recBooks.size(), new HashSet<>(recBooks).size());
+
+    List<Book> allBooks = mockApiService.getBooks();
+
+    allBooks.sort((a, b) -> {
+      return b.getAmountOfTimesCheckedOut() - a.getAmountOfTimesCheckedOut();
+    });
+
+    for (int i = 0; i < 5; i++) {
+      assertTrue(recBooks.contains(allBooks.get(i)));
+    }
+  }
+  
+  @Test
+  public void checkoutBookTestSuccess() {
+
+    assertFalse(books.isEmpty());
+    Book book = books.get(0);
+    book.addCopy();
+    mockApiService.updateBook(book);
+
+    final int checkedOutCopies = book.getAmountOfTimesCheckedOut();
+    final int availableCopies = book.getCopiesAvailable();
+
+    ResponseEntity<?> res = controller.checkoutBook(book.getId());
+
+    assertEquals(HttpStatus.OK, res.getStatusCode());
+    book = (Book) res.getBody();
+
+    assertNotNull(book);
+
+    assertEquals(availableCopies - 1, book.getCopiesAvailable());
+    assertEquals(checkedOutCopies + 1, book.getAmountOfTimesCheckedOut());
+
+  }
+
+  @Test
+  public void checkoutBookTestConflict() {
+
+    assertFalse(books.isEmpty());
+
+    Book empty = new Book("A", 1);
+    empty.checkoutCopy();
+    mockApiService.updateBook(empty);
+
+    ResponseEntity<?> res = controller.checkoutBook(empty.getId());
+    assertEquals(HttpStatus.CONFLICT, res.getStatusCode());
+
+  }
+
+  @Test
+  public void checkoutBookTestNotFound() {
+
+    assertFalse(books.isEmpty());
+
+    ResponseEntity<?> res = controller.checkoutBook(-1);
+    assertEquals(HttpStatus.NOT_FOUND, res.getStatusCode());
+    assertEquals("Book not found.",  res.getBody());
 
   }
 
