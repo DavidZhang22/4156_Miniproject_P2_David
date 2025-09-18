@@ -1,9 +1,9 @@
 package dev.coms4156.project.individualproject;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import dev.coms4156.project.individualproject.controller.RouteController;
 import dev.coms4156.project.individualproject.model.Book;
@@ -89,35 +89,35 @@ public class RouteControllerTests {
 
 
   @Test
-  public void getRecommendedTestSuccess(){
+  public void getRecommendedTestSuccess() {
     ResponseEntity<?> res = controller.getRecommendedBooks();
     assertEquals(HttpStatus.OK, res.getStatusCode());
 
-    List<Book> rec_books = (ArrayList<Book>) res.getBody();
-    assertNotNull(rec_books);
-    assertEquals(rec_books.size(), new HashSet<>(rec_books).size());
+    List<Book> recBooks = (ArrayList<Book>) res.getBody();
+    assertNotNull(recBooks);
+    assertEquals(recBooks.size(), new HashSet<>(recBooks).size());
 
-    List<Book> all_books = mockApiService.getBooks();
+    List<Book> allBooks = mockApiService.getBooks();
 
-    all_books.sort((a, b)->{
+    allBooks.sort((a, b) -> {
       return b.getAmountOfTimesCheckedOut() - a.getAmountOfTimesCheckedOut();
     });
 
-    for(int i =0; i<5; i++) {
-      assertTrue(rec_books.contains(all_books.get(i)));
+    for (int i = 0; i < 5; i++) {
+      assertTrue(recBooks.contains(allBooks.get(i)));
     }
   }
   
   @Test
-  public void checkoutBookTestSuccess(){
+  public void checkoutBookTestSuccess() {
 
     assertFalse(books.isEmpty());
     Book book = books.get(0);
     book.addCopy();
     mockApiService.updateBook(book);
 
-    int checkedOutCopies = book.getAmountOfTimesCheckedOut();
-    int availableCopies = book.getCopiesAvailable();
+    final int checkedOutCopies = book.getAmountOfTimesCheckedOut();
+    final int availableCopies = book.getCopiesAvailable();
 
     ResponseEntity<?> res = controller.checkoutBook(book.getId());
 
@@ -129,11 +129,10 @@ public class RouteControllerTests {
     assertEquals(availableCopies - 1, book.getCopiesAvailable());
     assertEquals(checkedOutCopies + 1, book.getAmountOfTimesCheckedOut());
 
-    
   }
 
   @Test
-  public void checkoutBookTestConflict(){
+  public void checkoutBookTestConflict() {
 
     assertFalse(books.isEmpty());
 
@@ -147,20 +146,13 @@ public class RouteControllerTests {
   }
 
   @Test
-  public void checkoutBookTestNotFound(){
+  public void checkoutBookTestNotFound() {
 
     assertFalse(books.isEmpty());
 
     ResponseEntity<?> res = controller.checkoutBook(-1);
     assertEquals(HttpStatus.NOT_FOUND, res.getStatusCode());
     assertEquals("Book not found.",  res.getBody());
-
-  }
-
-  @Test
-  public void addCopyTest() {
-
-  //WIP
 
   }
 

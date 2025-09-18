@@ -7,7 +7,11 @@ import java.util.Collections;
 import java.util.List;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 
 /**
  * This class contains all the API routes for the application.
@@ -73,41 +77,45 @@ public class RouteController {
     }
   }
 
-    /**
-     *
-     * @return A {@code ResponseEntity} containing a list of 10 recommended {@code Book} objects with an
-     * HTTP 200 response if successful, or a message indicating an error occurred with an HTTP 500
-     * response
-     */
-    @GetMapping({"/books/recommendation"})
-    public ResponseEntity<?> getRecommendedBooks() {
-        try {
-            List<Book> all_books = mockApiService.getBooks();
-            int books_len = all_books.size();
+  /**
+   * Returns a list of unique recommended {@code Books}.
+   *
+   * @return A {@code ResponseEntity} containing a list of 10 recommended {@code Book} objects
+   *         with an HTTP 200 response if successful, or a message indicating an error occurred
+   *         with an HTTP 500 response. If there are less than 10 books in the database, it
+   *         will return all available books.
+   */
 
-            if (books_len < 10){
-                return new ResponseEntity<>(all_books, HttpStatus.OK);
-            }
+  @GetMapping({"/books/recommendation"})
+  public ResponseEntity<?> getRecommendedBooks() {
+    try {
+      List<Book> allBooks = mockApiService.getBooks();
+      int booksLen = allBooks.size();
 
-            all_books.sort((a, b)->{
-                return b.getAmountOfTimesCheckedOut() - a.getAmountOfTimesCheckedOut();
-            });
+      if (booksLen < 10) {
+        return new ResponseEntity<>(allBooks, HttpStatus.OK);
+      }
 
-            List<Book> rec_books = new ArrayList<Book>(all_books.subList(0, 5)), tail = all_books.subList(5, books_len);
+      allBooks.sort((a, b) -> {
+        return b.getAmountOfTimesCheckedOut() - a.getAmountOfTimesCheckedOut();
+      });
 
-            Collections.shuffle(tail);
+      List<Book> recBooks = new ArrayList<Book>(allBooks.subList(0, 5));
+      List<Book> tail = allBooks.subList(5, booksLen);
 
-            for(int i =0; i<5; i++){
-                rec_books.add(tail.get(i));
-            }
+      Collections.shuffle(tail);
 
-            return new ResponseEntity<>(rec_books, HttpStatus.OK);
-        } catch (Exception e) {
-            System.err.println(e);
-            return new ResponseEntity<>("Error occurred when getting all recommended books",
-                    HttpStatus.INTERNAL_SERVER_ERROR);
-        }
+      for (int i = 0; i < 5; i++) {
+        recBooks.add(tail.get(i));
+      }
+
+      return new ResponseEntity<>(recBooks, HttpStatus.OK);
+    } catch (Exception e) {
+      System.err.println(e);
+      return new ResponseEntity<>("Error occurred when getting all recommended books",
+        HttpStatus.INTERNAL_SERVER_ERROR);
     }
+  }
 
 
   /**
@@ -148,25 +156,25 @@ public class RouteController {
   @PatchMapping({"/book/checkout"})
   public ResponseEntity<?> checkoutBook(@RequestParam Integer bookId) {
 
-      try {
-          for (Book book : mockApiService.getBooks()) {
+    try {
+      for (Book book : mockApiService.getBooks()) {
 
-            if (bookId.equals(book.getId())) {
-                  String res = book.checkoutCopy();
+        if (bookId.equals(book.getId())) {
+          String res = book.checkoutCopy();
 
-                  if (res == null) {
-                    return new ResponseEntity<>(book, HttpStatus.CONFLICT);
-                  }
-                  return new ResponseEntity<>(book, HttpStatus.OK);
-              }
+          if (res == null) {
+            return new ResponseEntity<>(book, HttpStatus.CONFLICT);
           }
-
-          return new ResponseEntity<>("Book not found.", HttpStatus.NOT_FOUND);
-      } catch (Exception e) {
-          System.err.println(e);
-          return new ResponseEntity<>("Error occurred when adding a copy.",
-                  HttpStatus.INTERNAL_SERVER_ERROR);
+          return new ResponseEntity<>(book, HttpStatus.OK);
+        }
       }
+
+      return new ResponseEntity<>("Book not found.", HttpStatus.NOT_FOUND);
+    } catch (Exception e) {
+      System.err.println(e);
+      return new ResponseEntity<>("Error occurred when adding a copy.",
+          HttpStatus.INTERNAL_SERVER_ERROR);
+    }
   }
 
 
