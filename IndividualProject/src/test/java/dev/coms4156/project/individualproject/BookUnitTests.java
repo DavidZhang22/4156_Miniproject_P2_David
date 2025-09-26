@@ -117,6 +117,7 @@ public class BookUnitTests {
     Book empty = new Book("", 2);
     assertTrue(empty.deleteCopy());
     assertEquals(0, empty.getCopiesAvailable());
+
   }
 
   @Test
@@ -125,5 +126,13 @@ public class BookUnitTests {
     assertNotNull(test.checkoutCopy());
     assertFalse(test.deleteCopy());
   }
+
+  @Test
+  public void deleteCopyTestFail2() {
+    Book test = new Book("", 2);
+    assertTrue(test.deleteCopy());
+    assertFalse(test.deleteCopy());
+  }
+
 
 }
