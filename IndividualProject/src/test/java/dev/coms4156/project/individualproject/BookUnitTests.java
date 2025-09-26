@@ -8,6 +8,7 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import dev.coms4156.project.individualproject.model.Book;
+import java.util.ArrayList;
 import java.util.List;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -56,6 +57,19 @@ public class BookUnitTests {
 
     assertEquals(totalCopies + 1, book.getCopiesAvailable());
     assertEquals(availableCopies + 1, book.getTotalCopies());
+
+  }
+
+  @Test
+  public void hasMultipleAuthorsTest() {
+
+    ArrayList<String> newAuthors = new ArrayList<>();
+    newAuthors.add("David");
+    book.setAuthors(newAuthors);
+    assertFalse(book.hasMultipleAuthors());
+    newAuthors.add("John");
+    book.setAuthors(newAuthors);
+    assertTrue(book.hasMultipleAuthors());
 
   }
 
