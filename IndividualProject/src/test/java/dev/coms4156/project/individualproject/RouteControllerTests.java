@@ -87,6 +87,29 @@ public class RouteControllerTests {
 
   }
 
+  @Test
+  public void getAvailableBooksSuccess() {
+
+    Book a = new Book("A", 1);
+    a.addCopy();
+    mockApiService.updateBook(a); //Guarantee one available book
+    ArrayList<Book> allBooks = mockApiService.getBooks();
+    ResponseEntity<?> res = controller.getAvailableBooks();
+
+    assertEquals(HttpStatus.OK, res.getStatusCode());
+    ArrayList<Book> availableBooks = (ArrayList<Book>) res.getBody();
+
+    assertNotNull(availableBooks);
+    for (Book book : allBooks) {
+      if (book.getCopiesAvailable() > 0) {
+        assertTrue(availableBooks.contains(book));
+      } else {
+        assertFalse(availableBooks.contains(book));
+      }
+    }
+
+  }
+
 
   @Test
   public void getRecommendedTestSuccess() {
