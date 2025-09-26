@@ -21,3 +21,5 @@ jobs:
           cache: 'maven'
       - name: Run maven verify
         run: mvn --batch-mode --update-snapshots verify
+        working-directory: IndividualProject
+
